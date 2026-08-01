@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Optima Course Deployer</title>
+<style>
+  :root{
+    --navy:#0E1C42; --cyan:#55C8E8; --gold:#C7922C;
+    --line:#D0D9E8; --bg:#EEF1F8; --ink:#12203f; --muted:#6b7a99;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;color:var(--ink);background:#f6f8fc}
+  header{background:var(--navy);color:#fff;padding:18px 28px;border-bottom:4px solid var(--cyan)}
+  header h1{margin:0;font-size:22px;font-weight:600}
+  header p{margin:4px 0 0;font-size:13px;color:var(--cyan)}
+  main{max-width:1180px;margin:0 auto;padding:22px 28px 80px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin-bottom:18px}
+  .card h2{margin:0 0 14px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--navy)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input[type=text],input[type=password],input[type=number],select{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    font-family:inherit;font-size:14px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--cyan);outline-offset:-1px}
+  button{font-family:inherit;font-size:14px;padding:9px 18px;border-radius:6px;
+    border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+  button:hover:not(:disabled){background:#16295c}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:#fff;color:var(--navy)}
+  button.small{padding:3px 9px;font-size:12px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .muted{color:var(--muted);font-size:12.5px}
+  .warn{background:#FFF7E6;border-left:4px solid var(--gold);padding:10px 14px;
+    border-radius:5px;font-size:13px;margin-top:12px}
+  .err{background:#FDECEC;border-left:4px solid #C0392B;padding:10px 14px;
+    border-radius:5px;font-size:13px;margin-top:12px}
+  .ok{background:#EAF7EF;border-left:4px solid #1E8449;padding:10px 14px;
+    border-radius:5px;font-size:13px;margin-top:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:4px 8px;border-bottom:1px solid #eef2f8;vertical-align:middle}
+  tr.excluded{opacity:.4}
+  .modhead{background:var(--bg)}
+  .modhead td{padding:9px 8px;font-weight:600;color:var(--navy)}
+  .badge{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:9px;
+    background:var(--bg);color:var(--navy);border:1px solid var(--line)}
+  .badge.iframe{background:#E8F6FC;border-color:#9BD9EF}
+  .badge.inline{background:#F3EFE4;border-color:#E0CFA4}
+  td input[type=text]{padding:4px 7px;font-size:13px}
+  td input[type=number]{padding:4px 7px;font-size:13px;width:70px}
+  td select{padding:4px 7px;font-size:12.5px}
+  #log{font-family:Consolas,monospace;font-size:12px;background:#0E1C42;color:#cfe6f5;
+    padding:14px;border-radius:8px;max-height:320px;overflow:auto;white-space:pre-wrap;display:none}
+  .steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .step{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--bg);color:var(--muted)}
+  .step.active{background:var(--navy);color:#fff}
+  .step.done{background:#EAF7EF;color:#1E8449}
+  details summary{cursor:pointer;font-size:13px;color:var(--navy)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Optima Course Deployer</h1>
+  <p>Folder &rarr; GitHub repo &rarr; sequenced Canvas course</p>
+</header>
+
+<main>
+  <div class="steps">
+    <span class="step active" id="s1">1. Connect</span>
+    <span class="step" id="s2">2. Choose folder</span>
+    <span class="step" id="s3">3. Review sequence</span>
+    <span class="step" id="s4">4. Deploy</span>
+  </div>
+
+  <!-- ------------------------------------------------ 1. connect -->
+  <div class="card">
+    <h2>1. Connection</h2>
+    <div class="grid">
+      <div>
+        <label for="pat">GitHub token</label>
+        <input type="password" id="pat" placeholder="ghp_..." autocomplete="off" />
+      </div>
+      <div>
+        <label for="owner">GitHub owner</label>
+        <input type="text" id="owner" value="optimaondemand" />
+      </div>
+      <div>
+        <label for="repo">Course repo name</label>
+        <input type="text" id="repo" placeholder="hs-career-research" />
+      </div>
+      <div>
+        <label for="canvasId">Canvas course id <span class="muted">(blank = create new)</span></label>
+        <input type="text" id="canvasId" placeholder="e.g. 224" />
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <label style="margin:0"><input type="checkbox" id="remember" /> Remember token in this browser</label>
+      <button class="ghost small" id="checkBtn">Check access</button>
+      <span id="whoami" class="muted"></span>
+    </div>
+    <div class="muted" style="margin-top:10px">
+      The Canvas token is <strong>not</strong> entered here. It lives in the deployer
+      repo's secrets and is only used by the GitHub Action, because the Canvas API
+      sends no CORS headers and cannot be called from a browser at all.
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------ 2. folder -->
+  <div class="card">
+    <h2>2. Course folder</h2>
+    <div class="row">
+      <input type="file" id="picker" webkitdirectory directory multiple />
+      <span id="pickSummary" class="muted"></span>
+    </div>
+    <div class="grid" style="margin-top:14px">
+      <div>
+        <label for="courseName">Course name</label>
+        <input type="text" id="courseName" placeholder="HS Career Research and Decision Making" />
+      </div>
+    </div>
+    <div id="scanNotes"></div>
+  </div>
+
+  <!-- ------------------------------------------------ 3. review -->
+  <div class="card" id="reviewCard" style="display:none">
+    <h2>3. Review the sequence</h2>
+    <p class="muted">
+      This is exactly what will be built in Canvas, in this order. Retitle, change a
+      type, set points, reorder, or untick anything you don't want deployed.
+    </p>
+    <div id="tableWrap"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="ghost" id="jsonBtn">View course.json</button>
+      <span id="counts" class="muted"></span>
+    </div>
+    <details style="margin-top:12px"><summary>course.json</summary>
+      <pre id="jsonOut" style="font-size:11.5px;overflow:auto;max-height:300px"></pre>
+    </details>
+  </div>
+
+  <!-- ------------------------------------------------ 4. deploy -->
+  <div class="card" id="deployCard" style="display:none">
+    <h2>4. Deploy</h2>
+    <div class="row">
+      <button id="deployBtn">Push to GitHub and deploy to Canvas</button>
+      <label style="margin:0"><input type="checkbox" id="pruneChk" /> Remove Canvas items no longer in the folder</label>
+    </div>
+    <div id="status"></div>
+    <div id="log"></div>
+  </div>
+</main>
+
+<script>
+"use strict";
+
+// =====================================================================
+//  Classification rules -- kept in lockstep with deployer/scan.py
+// =====================================================================
+
+const RULES = [
+  [/-CANVAS-NATIVE-SPEC\.md$/i, "NeedsReview"],
+  [/-CANVAS-RCE\.html$/i,       "Page"],
+  [/\.quiz\.json$/i,            "Quiz"],
+  [/^lesson[-_]/i,              "Page"],
+  [/^assignment[-_]/i,          "Assignment"],
+  [/^quiz[-_]/i,                "Quiz"],
+  [/^discussion[-_]/i,          "Discussion"],
+  [/\.(pdf|docx|pptx|xlsx)$/i,  "File"],
+  [/\.html?$/i,                 "Page"],
+];
+
+const EXCLUDE = [/^_/, /^\./, /readme/i, /\bREVIEW\b/, /-BUILD-NOTES?\b/i,
+                 /^course\.json$/i, /^\.canvas-deploy-state\.json$/i];
+
+// teach before you assess: page, then check, then the assignment it feeds
+const TYPE_RANK = {Page:0, Quiz:1, Discussion:2, Assignment:3, File:4};
+
+const TEXT_EXT = /\.(html?|md|json|txt|css|js|svg)$/i;
+
+function excluded(name){ return EXCLUDE.some(r => r.test(name)); }
+
+function itemType(name){
+  for (const [re,t] of RULES) if (re.test(name)) return t;
+  return null;
+}
+
+function naturalKey(s){
+  return s.split(/(\d+)/).map(t => /^\d+$/.test(t) ? t.padStart(8,"0") : t.toLowerCase()).join("");
+}
+
+function ordinalPrefix(name){
+  const stem = name.replace(/^(lesson|assignment|quiz|discussion)[-_]/i, "");
+  const nums = (stem.slice(0,12).match(/\d+/g) || []).slice(0,3).map(Number);
+  while (nums.length < 3) nums.push(999);
+  return nums;
+}
+
+function sortKey(name){
+  const o = ordinalPrefix(name);
+  const rank = TYPE_RANK[itemType(name)] ?? 5;
+  return [...o, rank, naturalKey(name)];
+}
+
+function cmpKeys(a,b){
+  for (let i=0;i<Math.max(a.length,b.length);i++){
+    const x=a[i], y=b[i];
+    if (x===y) continue;
+    if (x===undefined) return -1;
+    if (y===undefined) return 1;
+    return x < y ? -1 : 1;
+  }
+  return 0;
+}
+
+function stripTags(s){
+  const d = document.createElement("div");
+  d.innerHTML = s.replace(/<[^>]+>/g, " ");
+  return (d.textContent || "").replace(/\s+/g," ").trim();
+}
+
+function metaField(doc, label){
+  const re = new RegExp(">\\s*" + label + "\\s*</div>\\s*<div[^>]*>([\\s\\S]*?)</div>", "i");
+  const m = doc.match(re);
+  return m ? stripTags(m[1]) : null;
+}
+
+function extractPoints(doc){
+  const m = doc.match(/(\d+)\s*pts?\b/i);
+  return m ? parseInt(m[1],10) : null;
+}
+
+function humanize(filename){
+  let s = filename.replace(/\.[a-z0-9]+$/i, "");
+  s = s.replace(/[-_](CANVAS-RCE|CANVAS-NATIVE-SPEC|CANVAS-paste-ready)$/i, "");
+  s = s.replace(/^(lesson|assignment|quiz|discussion)[-_]/i, "");
+  s = s.replace(/^\d+([-_.]\d+)*[-_.]?/, "");
+  return s.split(/[-_\s]+/).filter(Boolean)
+          .map(w => w === w.toLowerCase() ? w.charAt(0).toUpperCase()+w.slice(1) : w)
+          .join(" ") || filename;
+}
+
+function isFullDocument(text){
+  const head = text.replace(/^\s+/,"").slice(0,200).toLowerCase();
+  return head.startsWith("<!doctype html") || head.startsWith("<html");
+}
+
+function titleFor(text, name, type){
+  if (type === "File" || !text) return humanize(name);
+  const topic = metaField(text, "Topic");
+  if (topic && topic.length > 2) return topic;
+  const m = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (m){
+    let t = stripTags(m[1]);
+    const parts = t.split(/\s+[-\u2013\u2014]\s+/);
+    t = parts[parts.length-1].trim();
+    if (t && !/^(lesson|assignment)\s*[\d.]+$/i.test(t)) return t;
+  }
+  return humanize(name);
+}
+
+// =====================================================================
+//  State
+// =====================================================================
+
+let FILES = [];      // {rel, name, dir, file, text, isText}
+let MODEL = null;    // {courseName, modules:[{key,title,published,items:[]}], frontPage, unmapped, skipped}
+
+const $ = id => document.getElementById(id);
+const logEl = $("log");
+
+function log(msg){
+  logEl.style.display = "block";
+  logEl.textContent += msg + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function setStep(n){
+  for (let i=1;i<=4;i++){
+    const el = $("s"+i);
+    el.className = "step" + (i<n ? " done" : i===n ? " active" : "");
+  }
+}
+function note(el, cls, html){ el.innerHTML = `<div class="${cls}">${html}</div>`; }
+
+// =====================================================================
+//  GitHub API
+// =====================================================================
+
+async function gh(method, path, body, token){
+  const res = await fetch(path.startsWith("http") ? path : "https://api.github.com"+path, {
+    method,
+    headers: {
+      "Authorization": "token " + token,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(body ? {"Content-Type":"application/json"} : {})
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const txt = await res.text();
+  let data = {};
+  try { data = txt ? JSON.parse(txt) : {}; } catch(e){ data = {raw:txt}; }
+  return {status: res.status, data};
+}
+
+function b64(bytes){
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i=0;i<bytes.length;i+=chunk)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  return btoa(bin);
+}
+
+// =====================================================================
+//  Read the picked folder
+// =====================================================================
+
+$("picker").addEventListener("change", async ev => {
+  const list = Array.from(ev.target.files);
+  if (!list.length) return;
+
+  // every path starts with the picked folder's own name -- drop it
+  const root = list[0].webkitRelativePath.split("/")[0];
+  FILES = [];
+  for (const f of list){
+    const parts = f.webkitRelativePath.split("/");
+    const rel = parts.slice(1).join("/");
+    if (!rel) continue;
+    if (parts.slice(1,-1).some(d => d.startsWith(".") || d === "__pycache__")) continue;
+    FILES.push({
+      rel, name: parts[parts.length-1],
+      dir: parts.slice(1,-1).join("/"),
+      file: f, text: null, isText: TEXT_EXT.test(f.name)
+    });
+  }
+
+  $("pickSummary").textContent = `${root} — ${FILES.length} files`;
+  if (!$("courseName").value) $("courseName").value = root;
+  if (!$("repo").value)
+    $("repo").value = root.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+
+  note($("scanNotes"), "ok", "Reading files…");
+  const textFiles = FILES.filter(f => f.isText);
+  await Promise.all(textFiles.map(async f => { f.text = await f.file.text(); }));
+
+  buildModel();
+  render();
+  setStep(3);
+});
+
+function buildModel(){
+  const skipped = [], unmapped = [];
+  const byDir = new Map();
+  for (const f of FILES){
+    if (!byDir.has(f.dir)) byDir.set(f.dir, []);
+    byDir.get(f.dir).push(f);
+  }
+
+  const dirs = Array.from(byDir.keys()).filter(d => d !== "")
+                    .sort((a,b) => cmpKeys([naturalKey(a)],[naturalKey(b)]));
+
+  function itemsFor(files, modKey){
+    const out = [];
+    files.sort((a,b) => cmpKeys(sortKey(a.name), sortKey(b.name)));
+    let n = 0;
+    for (const f of files){
+      if (excluded(f.name)){ skipped.push(f.rel); continue; }
+      const t = itemType(f.name);
+      if (!t){ skipped.push(f.rel); continue; }
+      if (t === "NeedsReview"){ unmapped.push(f.rel); continue; }
+      n++;
+      const item = {
+        key: `${modKey}-${String(n).padStart(2,"0")}`,
+        type: t, title: titleFor(f.text, f.name, t),
+        source: f.rel, indent: 0, include: true
+      };
+      if (t === "Page" || t === "Assignment" || t === "Discussion"){
+        item.mode = isFullDocument(f.text || "") ? "iframe" : "inline";
+        const pts = extractPoints(f.text || "");
+        if (t === "Assignment"){
+          item.points = pts ?? 0;
+          item.submission_types = ["online_upload"];
+        }
+      }
+      out.push(item);
+    }
+    return out;
+  }
+
+  const modules = [];
+  dirs.forEach((d, i) => {
+    const key = "m" + String(i+1).padStart(2,"0");
+    const items = itemsFor(byDir.get(d), key);
+    if (!items.length) return;
+    modules.push({
+      key, title: d.replace(/^\d+[-_.\s]*/,"").replace(/[-_]/g," ").trim() || d,
+      published: true, items
+    });
+  });
+
+  // root-level files: course home becomes the front page, the rest a resources module
+  let frontPage = null;
+  const rootItems = itemsFor(byDir.get("") || [], "m99").filter(it => {
+    if (/course[-_ ]?home/i.test(it.source)){ frontPage = it; return false; }
+    return true;
+  });
+  if (rootItems.length)
+    modules.push({key:"m99", title:"Course Resources", published:false, items:rootItems});
+  if (frontPage){ frontPage.key = "front-page"; frontPage.front_page = true; }
+
+  MODEL = {modules, frontPage, unmapped, skipped};
+}
+
+// =====================================================================
+//  Review table
+// =====================================================================
+
+function render(){
+  $("reviewCard").style.display = "";
+  $("deployCard").style.display = "";
+  const wrap = $("tableWrap");
+  const TYPES = ["Page","Assignment","Quiz","Discussion","File","SubHeader"];
+
+  let h = "<table><thead><tr><th style='width:34px'></th><th style='width:90px'>Order</th>"
+        + "<th style='width:120px'>Type</th><th>Title</th><th style='width:80px'>Points</th>"
+        + "<th style='width:74px'>Render</th><th style='width:60px'>Indent</th></tr></thead><tbody>";
+
+  if (MODEL.frontPage){
+    h += `<tr class="modhead"><td colspan="7">Course home page</td></tr>`;
+    h += `<tr><td></td><td class="muted">front</td><td class="muted">Page</td>`
+       + `<td><input type="text" data-fp="1" value="${esc(MODEL.frontPage.title)}"/></td>`
+       + `<td></td><td><span class="badge ${MODEL.frontPage.mode}">${MODEL.frontPage.mode}</span></td><td></td></tr>`;
+  }
+
+  MODEL.modules.forEach((m, mi) => {
+    h += `<tr class="modhead"><td><input type="checkbox" data-modpub="${mi}" ${m.published?"checked":""} title="published"/></td>`
+       + `<td colspan="6"><input type="text" data-modtitle="${mi}" value="${esc(m.title)}" `
+       + `style="border:none;background:transparent;font-weight:600;font-size:14px"/> `
+       + `<span class="muted">${m.items.length} items</span></td></tr>`;
+    m.items.forEach((it, ii) => {
+      h += `<tr class="${it.include?"":"excluded"}">`
+         + `<td><input type="checkbox" data-inc="${mi}.${ii}" ${it.include?"checked":""}/></td>`
+         + `<td><button class="small ghost" data-up="${mi}.${ii}">&uarr;</button> `
+         + `<button class="small ghost" data-down="${mi}.${ii}">&darr;</button></td>`
+         + `<td><select data-type="${mi}.${ii}">`
+         + TYPES.map(t => `<option ${t===it.type?"selected":""}>${t}</option>`).join("")
+         + `</select></td>`
+         + `<td><input type="text" data-title="${mi}.${ii}" value="${esc(it.title)}"/></td>`
+         + `<td>${it.type==="Assignment"||it.type==="Quiz"
+              ? `<input type="number" data-points="${mi}.${ii}" value="${it.points??0}"/>` : ""}</td>`
+         + `<td>${it.mode?`<span class="badge ${it.mode}">${it.mode}</span>`:""}</td>`
+         + `<td><input type="number" data-indent="${mi}.${ii}" value="${it.indent||0}" min="0" max="4"/></td>`
+         + `</tr>`;
+    });
+  });
+  h += "</tbody></table>";
+  wrap.innerHTML = h;
+
+  let notes = "";
+  if (MODEL.unmapped.length){
+    notes += `<div class="warn"><strong>${MODEL.unmapped.length} file(s) need a structured source and will not be deployed.</strong>
+      These are prose build specs (<code>*-CANVAS-NATIVE-SPEC.md</code>). Quiz and discussion
+      content has to come from a structured <code>.quiz.json</code> file so questions,
+      points and correct answers are unambiguous.
+      <details style="margin-top:6px"><summary>Show ${MODEL.unmapped.length}</summary>
+      <div class="muted" style="margin-top:6px">${MODEL.unmapped.map(esc).join("<br>")}</div></details></div>`;
+  }
+  if (MODEL.skipped.length){
+    notes += `<div class="muted" style="margin-top:10px">Skipped ${MODEL.skipped.length} build/internal file(s).</div>`;
+  }
+  $("scanNotes").innerHTML = notes;
+  updateCounts();
+  wireTable();
+}
+
+function esc(s){ return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+function loc(v){ const [a,b] = v.split("."); return [Number(a), Number(b)]; }
+
+function wireTable(){
+  const w = $("tableWrap");
+  w.querySelectorAll("[data-inc]").forEach(el => el.onchange = e => {
+    const [m,i] = loc(e.target.dataset.inc);
+    MODEL.modules[m].items[i].include = e.target.checked;
+    e.target.closest("tr").className = e.target.checked ? "" : "excluded";
+    updateCounts();
+  });
+  w.querySelectorAll("[data-title]").forEach(el => el.oninput = e => {
+    const [m,i] = loc(e.target.dataset.title);
+    MODEL.modules[m].items[i].title = e.target.value;
+  });
+  w.querySelectorAll("[data-points]").forEach(el => el.oninput = e => {
+    const [m,i] = loc(e.target.dataset.points);
+    MODEL.modules[m].items[i].points = Number(e.target.value);
+  });
+  w.querySelectorAll("[data-indent]").forEach(el => el.oninput = e => {
+    const [m,i] = loc(e.target.dataset.indent);
+    MODEL.modules[m].items[i].indent = Number(e.target.value);
+  });
+  w.querySelectorAll("[data-type]").forEach(el => el.onchange = e => {
+    const [m,i] = loc(e.target.dataset.type);
+    MODEL.modules[m].items[i].type = e.target.value;
+    render();
+  });
+  w.querySelectorAll("[data-modtitle]").forEach(el => el.oninput = e => {
+    MODEL.modules[Number(e.target.dataset.modtitle)].title = e.target.value;
+  });
+  w.querySelectorAll("[data-modpub]").forEach(el => el.onchange = e => {
+    MODEL.modules[Number(e.target.dataset.modpub)].published = e.target.checked;
+  });
+  w.querySelectorAll("[data-fp]").forEach(el => el.oninput = e => {
+    MODEL.frontPage.title = e.target.value;
+  });
+  const move = (v, d) => {
+    const [m,i] = loc(v);
+    const arr = MODEL.modules[m].items;
+    const j = i + d;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    render();
+  };
+  w.querySelectorAll("[data-up]").forEach(el => el.onclick = e => move(e.target.dataset.up, -1));
+  w.querySelectorAll("[data-down]").forEach(el => el.onclick = e => move(e.target.dataset.down, 1));
+}
+
+function updateCounts(){
+  const items = MODEL.modules.flatMap(m => m.items).filter(i => i.include);
+  $("counts").textContent =
+    `${MODEL.modules.length} modules, ${items.length} items to deploy`;
+}
+
+// =====================================================================
+//  Manifest
+// =====================================================================
+
+function pagesUrl(){
+  return `https://${$("owner").value.trim()}.github.io/${$("repo").value.trim()}/`;
+}
+
+function buildManifest(){
+  const modules = MODEL.modules.map(m => ({
+    key: m.key, title: m.title, published: m.published,
+    items: m.items.filter(i => i.include).map(i => {
+      const o = {key:i.key, type:i.type, title:i.title, source:i.source, indent:i.indent||0};
+      if (i.mode) o.mode = i.mode;
+      if (i.type === "Assignment"){ o.points = i.points||0; o.submission_types = i.submission_types; }
+      if (i.type === "Quiz") o.points = i.points||0;
+      return o;
+    })
+  })).filter(m => m.items.length);
+
+  const man = {
+    schema: 1,
+    course: {
+      name: $("courseName").value.trim() || $("repo").value.trim(),
+      pages_url: pagesUrl()
+    },
+    modules
+  };
+  const cid = $("canvasId").value.trim();
+  if (cid) man.course.canvas_course_id = Number(cid);
+  if (MODEL.frontPage){
+    man.front_page = {
+      key:"front-page", type:"Page", title:MODEL.frontPage.title,
+      source:MODEL.frontPage.source, mode:MODEL.frontPage.mode, front_page:true
+    };
+  }
+  return man;
+}
+
+$("jsonBtn").onclick = () => { $("jsonOut").textContent = JSON.stringify(buildManifest(), null, 2); };
+
+// =====================================================================
+//  Connect / deploy
+// =====================================================================
+
+const saved = localStorage.getItem("optima_pat");
+if (saved){ $("pat").value = saved; $("remember").checked = true; }
+$("remember").onchange = e => {
+  if (e.target.checked) localStorage.setItem("optima_pat", $("pat").value);
+  else localStorage.removeItem("optima_pat");
+};
+
+$("checkBtn").onclick = async () => {
+  const token = $("pat").value.trim();
+  if (!token) return note($("whoami"), "err", "Enter a token first.");
+  const {status, data} = await gh("GET", "/user", null, token);
+  if (status === 200){
+    $("whoami").textContent = `authenticated as ${data.login}`;
+    if ($("remember").checked) localStorage.setItem("optima_pat", token);
+    setStep(2);
+  } else {
+    $("whoami").textContent = `failed (${status})`;
+  }
+};
+
+$("deployBtn").onclick = async () => {
+  const token = $("pat").value.trim();
+  const owner = $("owner").value.trim();
+  const repo  = $("repo").value.trim();
+  if (!token || !owner || !repo) return note($("status"), "err", "Token, owner and repo are required.");
+
+  $("deployBtn").disabled = true;
+  logEl.textContent = "";
+  setStep(4);
+  try {
+    const manifest = buildManifest();
+
+    // 1. repo
+    let r = await gh("GET", `/repos/${owner}/${repo}`, null, token);
+    if (r.status === 404){
+      log(`creating repo ${owner}/${repo}…`);
+      const c = await gh("POST", "/user/repos",
+        {name:repo, description:manifest.course.name, private:false, auto_init:true}, token);
+      if (c.status >= 300) throw new Error("create repo failed: " + JSON.stringify(c.data));
+      r = await gh("GET", `/repos/${owner}/${repo}`, null, token);
+    } else log(`repo ${owner}/${repo} exists`);
+    const branch = r.data.default_branch || "main";
+
+    // 2. only the files the manifest references
+    const wanted = new Set();
+    if (manifest.front_page) wanted.add(manifest.front_page.source);
+    manifest.modules.forEach(m => m.items.forEach(i => { if (i.source) wanted.add(i.source); }));
+    const upload = FILES.filter(f => wanted.has(f.rel));
+    log(`${upload.length} content files to upload`);
+
+    // 3. blobs
+    const ref = await gh("GET", `/repos/${owner}/${repo}/git/ref/heads/${branch}`, null, token);
+    const baseSha = ref.data.object.sha;
+    const baseCommit = await gh("GET", `/repos/${owner}/${repo}/git/commits/${baseSha}`, null, token);
+
+    const tree = [];
+    let done = 0;
+    const queue = upload.slice();
+    async function worker(){
+      while (queue.length){
+        const f = queue.shift();
+        const buf = new Uint8Array(await f.file.arrayBuffer());
+        const b = await gh("POST", `/repos/${owner}/${repo}/git/blobs`,
+                           {content: b64(buf), encoding:"base64"}, token);
+        if (b.status >= 300) throw new Error(`blob ${f.rel}: ${JSON.stringify(b.data)}`);
+        tree.push({path:f.rel, mode:"100644", type:"blob", sha:b.data.sha});
+        if (++done % 10 === 0) log(`  ${done}/${upload.length}`);
+      }
+    }
+    await Promise.all(Array.from({length:6}, worker));
+
+    for (const [path, content] of Object.entries({
+      "course.json": JSON.stringify(manifest, null, 2) + "\n",
+      ".nojekyll": ""
+    })){
+      const b = await gh("POST", `/repos/${owner}/${repo}/git/blobs`,
+        {content: btoa(unescape(encodeURIComponent(content))), encoding:"base64"}, token);
+      tree.push({path, mode:"100644", type:"blob", sha:b.data.sha});
+    }
+
+    // 4. tree, commit, ref
+    log("creating commit…");
+    const t = await gh("POST", `/repos/${owner}/${repo}/git/trees`,
+      {base_tree: baseCommit.data.tree.sha, tree}, token);
+    if (t.status >= 300) throw new Error("tree: " + JSON.stringify(t.data));
+    const c = await gh("POST", `/repos/${owner}/${repo}/git/commits`,
+      {message:`Deploy ${manifest.course.name}`, tree:t.data.sha, parents:[baseSha]}, token);
+    const u = await gh("PATCH", `/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      {sha:c.data.sha, force:false}, token);
+    if (u.status >= 300) throw new Error("ref: " + JSON.stringify(u.data));
+    log(`committed ${c.data.sha.slice(0,8)}`);
+
+    // 5. pages
+    const p = await gh("POST", `/repos/${owner}/${repo}/pages`,
+      {source:{branch, path:"/"}}, token);
+    if (p.status < 300) log(`pages enabled: ${p.data.html_url}`);
+    else if (p.status === 409) log("pages already enabled");
+    else log(`pages not enabled (${p.status}) — enable once in repo Settings if lessons 404`);
+
+    // 6. hand off to the Action, which holds the Canvas token
+    log("triggering the Canvas deploy workflow…");
+    const d = await gh("POST",
+      `/repos/${owner}/${DEPLOYER_REPO}/actions/workflows/deploy.yml/dispatches`,
+      {ref:"main", inputs:{
+        course_repo: repo,
+        canvas_course_id: $("canvasId").value.trim(),
+        prune: $("pruneChk").checked
+      }}, token);
+    if (d.status >= 300) throw new Error("workflow dispatch: " + JSON.stringify(d.data));
+
+    note($("status"), "ok",
+      `Content pushed. Canvas deploy running — `
+      + `<a href="https://github.com/${owner}/${DEPLOYER_REPO}/actions" target="_blank">watch the run</a>.`);
+    await pollRun(owner, token);
+  } catch(err){
+    log("ERROR: " + err.message);
+    note($("status"), "err", err.message);
+  } finally {
+    $("deployBtn").disabled = false;
+  }
+};
+
+const DEPLOYER_REPO = "optima-course-deployer";
+
+async function pollRun(owner, token){
+  for (let i=0;i<80;i++){
+    await new Promise(r => setTimeout(r, 5000));
+    const {data} = await gh("GET",
+      `/repos/${owner}/${DEPLOYER_REPO}/actions/workflows/deploy.yml/runs?per_page=1`,
+      null, token);
+    const run = (data.workflow_runs||[])[0];
+    if (!run) continue;
+    if (run.status !== "completed"){ log(`  run ${run.status}…`); continue; }
+    if (run.conclusion === "success"){
+      note($("status"), "ok",
+        `Deploy complete. <a href="${run.html_url}" target="_blank">View the run log</a>.`);
+    } else {
+      note($("status"), "err",
+        `Deploy failed (${run.conclusion}). <a href="${run.html_url}" target="_blank">View the run log</a>.`);
+    }
+    return;
+  }
+  log("stopped polling; check the Actions tab");
+}
+</script>
+</body>
+</html>
